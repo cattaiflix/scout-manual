@@ -295,66 +295,53 @@ export default function App() {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
 
-          .no-print { display: none !important; }
-
-          /* Navbar sticky vira static na impressão para não aparecer no rodapé */
-          nav, header, .sticky { position: static !important; }
-
-          /* Heatmap PRIMEIRO — antes do wildcard para não ser sobrescrito */
-          .heat-0   { background: #e5e7eb !important; color: #111827 !important; }
-          .heat-lo  { background: #16a34a !important; color: #ffffff !important; }
-          .heat-md  { background: #d97706 !important; color: #ffffff !important; }
-          .heat-hi  { background: #dc2626 !important; color: #ffffff !important; }
-          .heat-lo *, .heat-md *, .heat-hi * { color: #ffffff !important; }
-          .heat-bar { background: #e5e7eb !important; color: #374151 !important; }
-
-          /* Fundo branco geral — após heatmap para não sobrescrever */
-          *, *::before, *::after {
-            box-shadow: none !important;
-            border-color: #d1d5db !important;
-          }
-          body, html, #root, #root > div {
-            background: #ffffff !important;
-            color: #111827 !important;
-          }
-
-          /* Elementos sem classe específica ficam transparentes */
-          *:not(.heat-0):not(.heat-lo):not(.heat-md):not(.heat-hi):not(.heat-bar):not(.print-card):not(.print-inner):not(.print-badge-monitor):not(.no-print) {
-            background-color: transparent !important;
-            color: #111827 !important;
-          }
+          /* Ocultar elementos de tela */
           .no-print, .no-print * { display: none !important; }
 
-          /* Cards com borda visível e sem quebra */
+          /* Navbar sticky não repete no rodapé */
+          nav, header, .sticky { position: static !important; }
+
+          /* Fundo branco geral */
+          *, *::before, *::after { box-shadow: none !important; }
+          body, html, #root, #root > div { background: #ffffff !important; color: #111827 !important; }
+
+          /* Fundo transparente para elementos genéricos */
+          * { background-color: transparent !important; color: #111827 !important; border-color: #d1d5db !important; }
+
+          /* ── Heatmap — cores vibrantes idênticas à tela ── */
+          .heat-0  { background-color: #1e293b !important; }
+          .heat-lo { background-color: #22c55e !important; }
+          .heat-md { background-color: #f59e0b !important; }
+          .heat-hi { background-color: #ef4444 !important; }
+          .heat-bar { background-color: #1e3a5f !important; }
+          .heat-0 *  { color: #94a3b8 !important; }
+          .heat-lo * { color: #ffffff !important; }
+          .heat-md * { color: #ffffff !important; }
+          .heat-hi * { color: #ffffff !important; }
+          .heat-bar * { color: #94a3b8 !important; }
+
+          /* Cards */
           .print-card {
-            background: #ffffff !important;
+            background-color: #ffffff !important;
             border: 1.5px solid #9ca3af !important;
-            border-radius: 8px !important;
-            padding: 12px !important;
-            margin-bottom: 10pt !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+            margin-bottom: 10pt !important;
           }
           .print-inner {
-            background: #f3f4f6 !important;
+            background-color: #f3f4f6 !important;
             border: 1px solid #d1d5db !important;
-            border-radius: 6px !important;
-            padding: 8px !important;
-            margin-bottom: 6pt !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
 
-          /* Texto e cores funcionais */
-          .print-score  { color: #1d4ed8 !important; }
-          .print-badge-monitor { background: #1d4ed8 !important; color: #ffffff !important; }
-          .res-green    { color: #15803d !important; }
-          .res-red      { color: #b91c1c !important; }
-          .res-yellow   { color: #92400e !important; }
-          .heat-bar { background: #e5e7eb !important; }
-          .heat-0 *, .heat-lo *, .heat-md *, .heat-hi * { color: #111827 !important; }
-
-          .print-partial { background: #f3f4f6 !important; }
+          /* Cores funcionais */
+          .print-score         { color: #1d4ed8 !important; }
+          .print-badge-monitor { background-color: #1d4ed8 !important; color: #ffffff !important; }
+          .res-green           { color: #15803d !important; }
+          .res-red             { color: #b91c1c !important; }
+          .res-yellow          { color: #92400e !important; }
+          .print-partial       { background-color: #f3f4f6 !important; }
         }
       `}</style>
 

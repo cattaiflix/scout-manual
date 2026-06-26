@@ -164,7 +164,6 @@ export default function App() {
   const [goalie, setGoalie]     = useState(saved?.goalie ?? emptyGoalie());
   const [newPen, setNewPen]     = useState(emptyPenalty());
   const [activeTab, setActiveTab] = useState(0);
-  const [saveMsg, setSaveMsg]   = useState("");
 
   // Auto-save whenever data changes
   useEffect(() => {

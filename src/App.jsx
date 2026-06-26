@@ -190,6 +190,85 @@ export default function App() {
   const bateStats = zoneCount(batedores);
   const golStats  = zoneCount(goleiroList);
 
+  // Result-based color per zone (for goleiro heatmap)
+  // Green if all defended, red if any gol, mixed = orange
+  const zoneResultColor = (arr) => ZONES.reduce((acc,z)=>{
+    const inZone = arr.filter(p=>p.zona===z.id);
+    if(inZone.length===0) return {...acc,[z.id]:null};
+    const gols = inZone.filter(p=>p.resultado==="gol").length;
+    const def  = inZone.filter(p=>p.resultado==="defendido").length;
+    if(gols===0)  return {...acc,[z.id]:"green"};
+    if(def===0)   return {...acc,[z.id]:"red"};
+    return {...acc,[z.id]:"orange"};
+  },{});
+  const golZoneColor = zoneResultColor(goleiroList);
+
+  // Result-based color for batedores:
+  // green=gol, yellow=defendido, red=fora
+  const bateZoneColor = (arr) => ZONES.reduce((acc,z)=>{
+    const inZone = arr.filter(p=>p.zona===z.id);
+    if(inZone.length===0) return {...acc,[z.id]:null};
+    // Dominant result
+    const gols = inZone.filter(p=>p.resultado==="gol").length;
+    const defs = inZone.filter(p=>p.resultado==="defendido").length;
+    const fora = inZone.filter(p=>p.resultado==="fora").length;
+    const max = Math.max(gols, defs, fora);
+    if(max===gols && gols>0) return {...acc,[z.id]:"green"};
+    if(max===defs && defs>0) return {...acc,[z.id]:"orange"};
+    return {...acc,[z.id]:"red"};
+  },{});
+  const bateZoneColors = bateZoneColor(batedores);
+
+  // Per-result filtered lists for split heatmaps
+  const bateGols    = batedores.filter(p=>p.resultado==="gol");
+  const bateErros   = batedores.filter(p=>p.resultado!=="gol");  // defendido or fora
+  const golSofridos = goleiroList.filter(p=>p.resultado==="gol");
+  const golDefesas  = goleiroList.filter(p=>p.resultado!=="gol"); // defendido or fora
+
+  const bateGolStats  = zoneCount(bateGols);
+  const bateErroStats = zoneCount(bateErros);
+  const golSofStats   = zoneCount(golSofridos);
+  const golDefStats   = zoneCount(golDefesas);
+
+  const bateGolNames  = zoneNames(bateGols);
+  const bateErroNames = zoneNames(bateErros);
+  const golSofNames   = zoneNames(golSofridos);
+  const golDefNames   = zoneNames(golDefesas);
+
+  // For erros: zone color = orange if defendido, red if fora
+  const bateErroZoneColor = (arr) => ZONES.reduce((acc,z)=>{
+    const inZone = arr.filter(p=>p.zona===z.id);
+    if(inZone.length===0) return {...acc,[z.id]:null};
+    const defs = inZone.filter(p=>p.resultado==="defendido").length;
+    const fora = inZone.filter(p=>p.resultado==="fora").length;
+    if(defs>=fora) return {...acc,[z.id]:"orange"};
+    return {...acc,[z.id]:"red"};
+  },{});
+  const bateErroColors = bateErroZoneColor(bateErros);
+
+  // For golDefesas: green if defended, orange if fora (missed by attacker)
+  const golDefZoneColor = (arr) => ZONES.reduce((acc,z)=>{
+    const inZone = arr.filter(p=>p.zona===z.id);
+    if(inZone.length===0) return {...acc,[z.id]:null};
+    const defs = inZone.filter(p=>p.resultado==="defendido").length;
+    if(defs>0) return {...acc,[z.id]:"green"};
+    return {...acc,[z.id]:"orange"};
+  },{});
+  const golDefColors = golDefZoneColor(golDefesas);
+
+  // Names per zone for heatmap labels
+  const zoneNames = (arr) => ZONES.reduce((acc,z)=>({
+    ...acc,
+    [z.id]: arr.filter(p=>p.zona===z.id).map(p=>{
+      const parts = (p.jogador||"").trim().split(" ");
+      // First name + initial of last name, max 10 chars
+      const short = parts.length>1 ? parts[0]+" "+parts[parts.length-1][0]+"." : parts[0];
+      return short.slice(0,11);
+    })
+  }),{});
+  const bateNames = zoneNames(batedores);
+  const golNames  = zoneNames(goleiroList);
+
   const ic = "w-full bg-[#0d1b2a] border border-[#1e3a5f] rounded-lg px-3 py-2 text-white placeholder-[#4a6fa5] focus:outline-none focus:border-[#3b82f6] text-sm";
   const lc = "block text-xs font-semibold text-[#7fb3f5] uppercase tracking-wider mb-1";
   const cc = "bg-[#0a1628] border border-[#1e3a5f] rounded-xl p-4";
@@ -220,17 +299,33 @@ export default function App() {
 
           .no-print { display: none !important; }
 
-          /* Força fundo branco em TUDO */
+          /* Navbar sticky vira static na impressão para não aparecer no rodapé */
+          nav, header, .sticky { position: static !important; }
+
+          /* Heatmap PRIMEIRO — antes do wildcard para não ser sobrescrito */
+          .heat-0   { background: #e5e7eb !important; color: #111827 !important; }
+          .heat-lo  { background: #16a34a !important; color: #ffffff !important; }
+          .heat-md  { background: #d97706 !important; color: #ffffff !important; }
+          .heat-hi  { background: #dc2626 !important; color: #ffffff !important; }
+          .heat-lo *, .heat-md *, .heat-hi * { color: #ffffff !important; }
+          .heat-bar { background: #e5e7eb !important; color: #374151 !important; }
+
+          /* Fundo branco geral — após heatmap para não sobrescrever */
           *, *::before, *::after {
-            background-color: transparent !important;
-            color: #111827 !important;
-            border-color: #d1d5db !important;
             box-shadow: none !important;
+            border-color: #d1d5db !important;
           }
           body, html, #root, #root > div {
             background: #ffffff !important;
             color: #111827 !important;
           }
+
+          /* Elementos sem classe específica ficam transparentes */
+          *:not(.heat-0):not(.heat-lo):not(.heat-md):not(.heat-hi):not(.heat-bar):not(.print-card):not(.print-inner):not(.print-badge-monitor):not(.no-print) {
+            background-color: transparent !important;
+            color: #111827 !important;
+          }
+          .no-print, .no-print * { display: none !important; }
 
           /* Cards com borda visível e sem quebra */
           .print-card {
@@ -254,16 +349,10 @@ export default function App() {
 
           /* Texto e cores funcionais */
           .print-score  { color: #1d4ed8 !important; }
-          .print-badge-monitor { background: #1d4ed8 !important; color: #fff !important; }
+          .print-badge-monitor { background: #1d4ed8 !important; color: #ffffff !important; }
           .res-green    { color: #15803d !important; }
           .res-red      { color: #b91c1c !important; }
           .res-yellow   { color: #92400e !important; }
-
-          /* Heatmap */
-          .heat-0   { background: #e5e7eb !important; }
-          .heat-lo  { background: #bbf7d0 !important; }
-          .heat-md  { background: #fde68a !important; }
-          .heat-hi  { background: #fca5a5 !important; }
           .heat-bar { background: #e5e7eb !important; }
           .heat-0 *, .heat-lo *, .heat-md *, .heat-hi * { color: #111827 !important; }
 
@@ -684,34 +773,84 @@ export default function App() {
                 {goalie.observacoes && <p className="text-gray-300 mt-1 text-sm">{goalie.observacoes}</p>}
               </div>
 
-              {/* Mapas de calor */}
-              {penalties.length>0 && (
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  {[[`⚽ Batedores — Onde bateram`, bateStats],[`🧤 Goleiro ${nomeMonitorado} — Onde pulou`, golStats]].map(([title,stats])=>(
-                    <div key={title} className="print-inner bg-[#0d1b2a] rounded-lg p-3 border border-[#1e3a5f]">
-                      <p className="text-xs font-bold text-[#7fb3f5] uppercase mb-2">{title}</p>
-                      <div className="border-2 border-[#1e3a5f] rounded overflow-hidden">
-                        <div className="grid grid-cols-3">
-                          {ZONES.map(z=>{
-                            const count=stats[z.id]||0;
-                            const max=Math.max(...Object.values(stats),1);
-                            const intensity=count/max;
-                            const bg=count===0?"heat-0 bg-[#0a1628]":intensity>0.7?"heat-hi bg-[#ef4444]":intensity>0.4?"heat-md bg-[#f59e0b]":"heat-lo bg-[#22c55e]";
-                            return (
-                              <div key={z.id} className={`${bg} border border-[#1e3a5f] p-2 text-center min-h-12 flex items-center justify-center`}>
-                                <span className="text-xs font-bold text-white">{count>0?count:""}</span>
-                              </div>
-                            );
-                          })}
+              {/* Mapas de calor — 4 quadros */}
+              {penalties.length>0 && (() => {
+                const Cell = ({stats, names, colorFn, fixedColor}) => (
+                  <div className="grid grid-cols-3">
+                    {ZONES.map(z=>{
+                      const count=stats[z.id]||0;
+                      const nms=names[z.id]||[];
+                      let bg;
+                      if(count===0) bg="heat-0 bg-[#0a1628]";
+                      else if(fixedColor==="green") bg="heat-lo bg-[#22c55e]";
+                      else if(fixedColor==="red")   bg="heat-hi bg-[#ef4444]";
+                      else {
+                        const rc=colorFn?colorFn[z.id]:null;
+                        bg=rc==="green"?"heat-lo bg-[#22c55e]":rc==="orange"?"heat-md bg-[#f59e0b]":"heat-hi bg-[#ef4444]";
+                      }
+                      return (
+                        <div key={z.id} className={`${bg} border border-[#1e3a5f] min-h-14 flex flex-col items-center justify-center gap-0.5 px-1 py-1.5`}>
+                          {count>0 && <span className="text-xs font-black text-white leading-none">{count}</span>}
+                          {nms.map((nm,ni)=>(
+                            <span key={ni} className="text-white font-medium leading-none text-center"
+                              style={{fontSize:"9px",lineHeight:"1.1",maxWidth:"100%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                              {nm}
+                            </span>
+                          ))}
                         </div>
-                        <div className="heat-bar text-center bg-[#1e3a5f] py-1">
-                          <span className="text-xs text-[#4a6fa5]">⬛ Gol</span>
+                      );
+                    })}
+                  </div>
+                );
+                const Legend = ({items}) => (
+                  <div className="heat-bar text-center bg-[#1e3a5f] py-1">
+                    <span className="text-xs text-[#4a6fa5] flex items-center justify-center gap-2">
+                      {items.map(it=><span key={it}>{it}</span>)}
+                    </span>
+                  </div>
+                );
+                return (
+                  <>
+                    {/* ── Linha 1: Batedores ── */}
+                    <p className="text-xs font-bold text-[#7fb3f5] uppercase mb-1 mt-2">⚽ Batedores — {nomeMonitorado}</p>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="print-inner bg-[#0d1b2a] rounded-lg p-2 border border-[#1e3a5f]">
+                        <p className="text-xs font-semibold text-green-400 mb-1">✅ Onde marcaram gol</p>
+                        <div className="border-2 border-[#1e3a5f] rounded overflow-hidden">
+                          <Cell stats={bateGolStats} names={bateGolNames} fixedColor="green" />
+                          <Legend items={["🟢 Gol"]} />
+                        </div>
+                      </div>
+                      <div className="print-inner bg-[#0d1b2a] rounded-lg p-2 border border-[#1e3a5f]">
+                        <p className="text-xs font-semibold text-red-400 mb-1">❌ Onde erraram</p>
+                        <div className="border-2 border-[#1e3a5f] rounded overflow-hidden">
+                          <Cell stats={bateErroStats} names={bateErroNames} colorFn={bateErroColors} />
+                          <Legend items={["🟡 Defendido","🔴 Fora"]} />
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+
+                    {/* ── Linha 2: Goleiro ── */}
+                    <p className="text-xs font-bold text-[#a78bfa] uppercase mb-1">🧤 Goleiro — {nomeMonitorado}</p>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="print-inner bg-[#0d1b2a] rounded-lg p-2 border border-[#1e3a5f]">
+                        <p className="text-xs font-semibold text-red-400 mb-1">🔴 Onde sofreu gol</p>
+                        <div className="border-2 border-[#1e3a5f] rounded overflow-hidden">
+                          <Cell stats={golSofStats} names={golSofNames} fixedColor="red" />
+                          <Legend items={["🔴 Gol sofrido"]} />
+                        </div>
+                      </div>
+                      <div className="print-inner bg-[#0d1b2a] rounded-lg p-2 border border-[#1e3a5f]">
+                        <p className="text-xs font-semibold text-green-400 mb-1">🟢 Onde defendeu / saiu fora</p>
+                        <div className="border-2 border-[#1e3a5f] rounded overflow-hidden">
+                          <Cell stats={golDefStats} names={golDefNames} colorFn={golDefColors} />
+                          <Legend items={["🟢 Defendido","🟡 Fora"]} />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
 
               {/* Batedores */}
               {batedores.length>0 && (

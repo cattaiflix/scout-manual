@@ -667,7 +667,7 @@ export default function App() {
               </div>
               <div className="text-center">
                 <p className="text-[#4a6fa5] text-xs uppercase">vs</p>
-                <p className="text-xs text-[#4a6fa5] mt-1">{header.data}</p>
+                <p className="text-xs text-[#4a6fa5] mt-1">{header.data ? header.data.split("-").reverse().join("/") : ""}</p>
                 {(penTotalMon>0||penTotalAdv>0) && (
                   <div className="mt-1 text-center">
                     <p className="text-[10px] text-[#4a6fa5] uppercase">Pênaltis</p>

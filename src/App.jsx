@@ -206,42 +206,68 @@ export default function App() {
       <style>{`
         textarea { resize: vertical; min-height: 72px; }
 
-        @page { margin: 1cm; size: A4; }
-
         /* ── PRINT THEME ─────────────────────────────────────────── */
-        @media print {
-          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          .no-print { display: none !important; }
-          body, html { background: #ffffff !important; color: #111827 !important; }
-          #root > div { background: #ffffff !important; }
+        @page {
+          size: A4;
+          margin: 1.2cm 1cm;
+          /* Remove browser header/footer (works in Chrome/Edge) */
+          margin-top: 1cm;
+        }
 
+        @media print {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+
+          .no-print { display: none !important; }
+
+          /* Força fundo branco em TUDO */
+          *, *::before, *::after {
+            background-color: transparent !important;
+            color: #111827 !important;
+            border-color: #d1d5db !important;
+            box-shadow: none !important;
+          }
+          body, html, #root, #root > div {
+            background: #ffffff !important;
+            color: #111827 !important;
+          }
+
+          /* Cards com borda visível e sem quebra */
           .print-card {
             background: #ffffff !important;
-            border: 1.5px solid #d1d5db !important;
-            color: #111827 !important;
+            border: 1.5px solid #9ca3af !important;
+            border-radius: 8px !important;
+            padding: 12px !important;
+            margin-bottom: 10pt !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
           .print-inner {
             background: #f3f4f6 !important;
-            border: 1px solid #e5e7eb !important;
-            color: #111827 !important;
+            border: 1px solid #d1d5db !important;
+            border-radius: 6px !important;
+            padding: 8px !important;
+            margin-bottom: 6pt !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
-          .print-card *, .print-inner * { color: #111827 !important; }
-          .print-score { color: #1d4ed8 !important; }
+
+          /* Texto e cores funcionais */
+          .print-score  { color: #1d4ed8 !important; }
           .print-badge-monitor { background: #1d4ed8 !important; color: #fff !important; }
-          .res-green  { color: #15803d !important; }
-          .res-red    { color: #b91c1c !important; }
-          .res-yellow { color: #92400e !important; }
-          .heat-0  { background: #f3f4f6 !important; }
-          .heat-lo { background: #bbf7d0 !important; }
-          .heat-md { background: #fde68a !important; }
-          .heat-hi { background: #fca5a5 !important; }
-          .heat-bar { background: #e5e7eb !important; color: #374151 !important; }
-          .print-partial { background: #f9fafb !important; color: #111827 !important; }
-          .print-card + .print-card { margin-top: 12pt !important; }
+          .res-green    { color: #15803d !important; }
+          .res-red      { color: #b91c1c !important; }
+          .res-yellow   { color: #92400e !important; }
+
+          /* Heatmap */
+          .heat-0   { background: #e5e7eb !important; }
+          .heat-lo  { background: #bbf7d0 !important; }
+          .heat-md  { background: #fde68a !important; }
+          .heat-hi  { background: #fca5a5 !important; }
+          .heat-bar { background: #e5e7eb !important; }
+          .heat-0 *, .heat-lo *, .heat-md *, .heat-hi * { color: #111827 !important; }
+
+          .print-partial { background: #f3f4f6 !important; }
         }
       `}</style>
 

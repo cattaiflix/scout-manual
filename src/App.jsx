@@ -292,19 +292,28 @@ export default function App() {
         }
 
         @media print {
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
+          /* Color adjust precisa estar DENTRO de um seletor, não solto */
+          html {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
 
           /* Ocultar nav, botões e elementos de tela */
           .no-print { display: none !important; }
 
-          /* Fundo branco geral — exclui células do heatmap */
-          body, html { background: #ffffff !important; color: #111827 !important; }
-          body *:not(.heat-0):not(.heat-lo):not(.heat-md):not(.heat-hi):not(.heat-bar) {
-            background-color: #ffffff !important;
+          /* Fundo branco geral */
+          body, html {
+            background: #ffffff !important;
+            color: #111827 !important;
+          }
+          body * {
             color: #111827 !important;
             box-shadow: none !important;
             border-color: #d1d5db !important;
+          }
+          /* Fundo branco só para elementos que NÃO são heatmap */
+          body *:not(.heat-0):not(.heat-lo):not(.heat-md):not(.heat-hi):not(.heat-bar) {
+            background-color: #ffffff !important;
           }
 
           /* Cards — borda visível e sem quebra de página no meio */
@@ -315,39 +324,37 @@ export default function App() {
             margin-bottom: 8pt !important;
           }
           .print-inner {
-            background-color: #f3f4f6 !important;
             border: 1px solid #d1d5db !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
+          .print-inner:not(.heat-bar),
           .print-inner *:not(.heat-0):not(.heat-lo):not(.heat-md):not(.heat-hi):not(.heat-bar) {
             background-color: #f3f4f6 !important;
           }
 
-          /* Parciais */
-          .print-partial,
-          .print-partial *:not(.heat-0):not(.heat-lo):not(.heat-md):not(.heat-hi) {
-            background-color: #f3f4f6 !important;
-          }
-
           /* Cores de texto funcionais */
-          .print-score         { color: #1d4ed8 !important; }
-          .print-badge-monitor { background-color: #1d4ed8 !important; color: #ffffff !important; }
+          .print-score { color: #1d4ed8 !important; }
+          .print-badge-monitor,
+          .print-badge-monitor * {
+            background-color: #1d4ed8 !important;
+            color: #ffffff !important;
+          }
           .res-green  { color: #15803d !important; }
           .res-red    { color: #b91c1c !important; }
           .res-yellow { color: #92400e !important; }
 
-          /* ── Heatmap — cores da tela mantidas na impressão ── */
-          .heat-0   { background-color: #e5e7eb !important; color: #6b7280 !important; }
-          .heat-lo  { background-color: #22c55e !important; color: #ffffff !important; }
-          .heat-md  { background-color: #f59e0b !important; color: #ffffff !important; }
-          .heat-hi  { background-color: #ef4444 !important; color: #ffffff !important; }
-          .heat-bar { background-color: #334155 !important; color: #94a3b8 !important; }
-          .heat-0 span  { background-color: #e5e7eb !important; color: #6b7280 !important; }
-          .heat-lo span { background-color: #22c55e !important; color: #ffffff !important; }
-          .heat-md span { background-color: #f59e0b !important; color: #ffffff !important; }
-          .heat-hi span { background-color: #ef4444 !important; color: #ffffff !important; }
-          .heat-bar span { background-color: #334155 !important; color: #94a3b8 !important; }
+          /* ── HEATMAP — cores fortes mantidas (alta especificidade) ── */
+          .print-card .heat-lo,
+          .print-card .heat-lo span { background-color: #16a34a !important; color: #ffffff !important; }
+          .print-card .heat-md,
+          .print-card .heat-md span { background-color: #d97706 !important; color: #ffffff !important; }
+          .print-card .heat-hi,
+          .print-card .heat-hi span { background-color: #dc2626 !important; color: #ffffff !important; }
+          .print-card .heat-0,
+          .print-card .heat-0 span { background-color: #e5e7eb !important; color: #6b7280 !important; }
+          .print-card .heat-bar,
+          .print-card .heat-bar span { background-color: #f3f4f6 !important; color: #374151 !important; }
         }
       `}</style>
 
@@ -703,25 +710,27 @@ export default function App() {
                 <span className="text-sm text-yellow-400 font-bold">{p.gols1.length} x {p.gols2.length}</span>
                 {p.formacao && <span className="ml-auto bg-[#1e3a5f] text-[#7fb3f5] text-xs px-2 py-0.5 rounded-full font-mono">{p.formacao}</span>}
               </div>
-              {(p.gols1.length>0||p.gols2.length>0) && (
-                <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="print-inner bg-[#0d1b2a] rounded-lg p-3 border border-[#1e3a5f] mb-3">
+                <p className="text-xs font-bold text-[#f59e0b] uppercase mb-2">⚽ Gols do Tempo</p>
+                <div className="grid grid-cols-2 gap-3">
                   {[["gols1",header.time1||"Time 1"],["gols2",header.time2||"Time 2"]].map(([key,name])=>(
-                    p[key].length>0 && (
-                      <div key={key} className="print-inner bg-[#0d1b2a] rounded-lg p-2 border border-[#1e3a5f]">
-                        <p className="text-xs font-bold text-[#7fb3f5] mb-1">{name}</p>
-                        <div className="space-y-1">
-                          {p[key].map((g,gi)=>(
-                            <div key={gi} className="flex items-center gap-1">
-                              <span className="text-xs text-[#4a6fa5]">{gi+1}.</span>
-                              {goalTypeBadge(g.tipo)}
-                            </div>
-                          ))}
-                        </div>
+                    <div key={key} className="bg-[#060e1a] rounded-lg p-2 border border-[#1e3a5f]">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs font-bold text-[#7fb3f5] truncate">{name}</p>
+                        <span className="text-sm font-black text-white">{p[key].length}</span>
                       </div>
-                    )
+                      <div className="space-y-1">
+                        {p[key].length>0 ? p[key].map((g,gi)=>(
+                          <div key={gi} className="flex items-center gap-1">
+                            <span className="text-xs text-[#4a6fa5]">{gi+1}.</span>
+                            {goalTypeBadge(g.tipo)}
+                          </div>
+                        )) : <p className="text-xs text-[#4a6fa5] italic">Sem gols</p>}
+                      </div>
+                    </div>
                   ))}
                 </div>
-              )}
+              </div>
               <div className="grid grid-cols-1 gap-2 text-sm">
                 {[["⚔️ Ataque",p.ataque],["🛡 Defesa",p.defesa],["🔄 Saída",p.saida],["⭐ Destaques",p.destaques]].map(([l,v])=>v&&(
                   <div key={l} className="print-inner bg-[#0d1b2a] rounded-lg p-3 border border-[#1e3a5f]">

@@ -160,14 +160,12 @@ export default function App() {
   const total1 = periods.reduce((s,p)=>s+p.gols1.length,0);
   const total2 = periods.reduce((s,p)=>s+p.gols2.length,0);
 
-  // Pênaltis: batedores = time monitorado; goleiro = goleiro adversário
-  // Gols do time monitorado em pênaltis = batedores que converteram
-  // Gols sofridos = cobranças no goleiro que foram gol
-  const penGolsMonitorado  = penalties.filter(p=>p.tipo==="batedor" && p.resultado==="gol").length;
-  const penGolsSofridos    = penalties.filter(p=>p.tipo==="goleiro" && p.resultado==="gol").length;
-  // Placar pênaltis: monitorado x adversário
-  const penTotalMon = penGolsMonitorado;
-  const penTotalAdv = penGolsSofridos;
+  // Pênaltis: batedores e goleiro são ambos do time MONITORADO
+  // Batedores = jogadores do monitorado que cobram (adversário tem o goleiro)
+  // Goleiro = goleiro do monitorado que defende cobranças adversárias
+  // Placar: gols convertidos pelos batedores do monitorado x gols sofridos pelo goleiro do monitorado
+  const penTotalMon = penalties.filter(p=>p.tipo==="batedor" && p.resultado==="gol").length;
+  const penTotalAdv = penalties.filter(p=>p.tipo==="goleiro" && p.resultado==="gol").length;
 
   const nomeMonitorado  = header.timeMonitorado==="time1" ? (header.time1||"Time 1") : (header.time2||"Time 2");
   const nomeAdversario  = header.timeMonitorado==="time1" ? (header.time2||"Time 2") : (header.time1||"Time 1");
@@ -207,6 +205,8 @@ export default function App() {
     <div className="min-h-screen bg-[#060e1a] text-white font-sans">
       <style>{`
         textarea { resize: vertical; min-height: 72px; }
+
+        @page { margin: 1cm; size: A4; }
 
         /* ── PRINT THEME ─────────────────────────────────────────── */
         @media print {
@@ -384,13 +384,14 @@ export default function App() {
           <div className={cc}>
             <h2 className="text-sm font-bold text-[#7fb3f5] uppercase tracking-widest mb-1">🥅 Cobranças de Pênalti</h2>
             <p className="text-xs text-[#4a6fa5] mb-3">
-              <span className="text-[#7fb3f5] font-semibold">Batedores</span> = jogadores do <span className="text-white font-semibold">{nomeMonitorado}</span> &nbsp;|&nbsp;
-              <span className="text-[#a78bfa] font-semibold">Goleiro</span> = goleiro adversário (<span className="text-white font-semibold">{nomeAdversario}</span>)
+              Ambos referentes ao <span className="text-white font-semibold">{nomeMonitorado}</span>: &nbsp;
+              <span className="text-[#7fb3f5] font-semibold">Batedores</span> = jogadores que cobram &nbsp;|&nbsp;
+              <span className="text-[#a78bfa] font-semibold">Goleiro</span> = goleiro que defende
             </p>
 
             {/* Goleiro adversário */}
             <div className="bg-[#0d1b2a] rounded-lg p-3 mb-4 border border-[#1e3a5f]">
-              <h3 className="text-xs font-bold text-[#f59e0b] uppercase mb-2">🧤 Goleiro Adversário ({nomeAdversario})</h3>
+              <h3 className="text-xs font-bold text-[#f59e0b] uppercase mb-2">🧤 Goleiro ({nomeMonitorado})</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={lc}>Comportamento</label>
@@ -425,7 +426,7 @@ export default function App() {
               <div className="mb-2">
                 <label className={lc}>Tipo</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {[["batedor",`⚽ Batedor (${nomeMonitorado})`],["goleiro",`🧤 Goleiro (${nomeAdversario})`]].map(([v,l])=>(
+                  {[["batedor",`⚽ Batedor (${nomeMonitorado})`],["goleiro",`🧤 Goleiro (${nomeMonitorado})`]].map(([v,l])=>(
                     <button key={v} type="button" onClick={()=>setNewPen(n=>({...n,tipo:v}))}
                       className={`py-2 rounded-lg text-xs font-medium border transition-colors ${newPen.tipo===v?"bg-[#3b82f6] border-[#3b82f6] text-white":"border-[#1e3a5f] text-[#4a6fa5] hover:text-white"}`}>
                       {l}
@@ -629,19 +630,19 @@ export default function App() {
             <div className="print-card bg-[#0a1628] border border-[#1e3a5f] rounded-xl p-4">
               <h3 className="font-bold mb-1">🥅 Análise de Pênaltis</h3>
               <p className="text-xs text-[#4a6fa5] mb-3">
-                Batedores: <strong className="text-white">{nomeMonitorado}</strong> &nbsp;|&nbsp; Goleiro: <strong className="text-white">{nomeAdversario}</strong>
+                Ambos do time monitorado: <strong className="text-white">{nomeMonitorado}</strong>
               </p>
 
               {/* Placar pênaltis */}
               {(penTotalMon>0||penTotalAdv>0) && (
                 <div className="print-inner bg-[#060e1a] rounded-lg p-3 border border-[#1e3a5f] mb-3 flex items-center gap-4">
                   <div className="text-center flex-1">
-                    <p className="text-xs text-[#4a6fa5]">{nomeMonitorado}</p>
+                    <p className="text-xs text-[#4a6fa5]">{nomeMonitorado} (marcou)</p>
                     <p className="text-2xl font-black text-green-400">{penTotalMon}</p>
                   </div>
                   <span className="text-[#4a6fa5] font-bold text-lg">x</span>
                   <div className="text-center flex-1">
-                    <p className="text-xs text-[#4a6fa5]">{nomeAdversario}</p>
+                    <p className="text-xs text-[#4a6fa5]">{nomeAdversario} (marcou)</p>
                     <p className="text-2xl font-black text-red-400">{penTotalAdv}</p>
                   </div>
                 </div>
@@ -649,7 +650,7 @@ export default function App() {
 
               {/* Goleiro info */}
               <div className="print-inner bg-[#0d1b2a] rounded-lg p-3 border border-[#1e3a5f] mb-3">
-                <p className="text-xs font-bold text-[#f59e0b] uppercase mb-1">🧤 Goleiro — {nomeAdversario}</p>
+                <p className="text-xs font-bold text-[#f59e0b] uppercase mb-1">🧤 Goleiro — {nomeMonitorado}</p>
                 <div className="flex gap-4 text-sm flex-wrap">
                   <span>Comportamento: <strong className="text-white capitalize">{goalie.comportamento}</strong></span>
                   {goalie.ladoPreferido && <span>Lado preferido: <strong className="text-white">{ZONE_LABELS[goalie.ladoPreferido]}</strong></span>}
@@ -660,7 +661,7 @@ export default function App() {
               {/* Mapas de calor */}
               {penalties.length>0 && (
                 <div className="grid grid-cols-2 gap-3 mb-3">
-                  {[[`⚽ ${nomeMonitorado} — Onde bateu`, bateStats],[`🧤 Goleiro — Onde pulou`, golStats]].map(([title,stats])=>(
+                  {[[`⚽ Batedores — Onde bateram`, bateStats],[`🧤 Goleiro ${nomeMonitorado} — Onde pulou`, golStats]].map(([title,stats])=>(
                     <div key={title} className="print-inner bg-[#0d1b2a] rounded-lg p-3 border border-[#1e3a5f]">
                       <p className="text-xs font-bold text-[#7fb3f5] uppercase mb-2">{title}</p>
                       <div className="border-2 border-[#1e3a5f] rounded overflow-hidden">
@@ -689,7 +690,7 @@ export default function App() {
               {/* Batedores */}
               {batedores.length>0 && (
                 <div className="print-inner bg-[#0d1b2a] rounded-lg p-3 border border-[#1e3a5f] mb-2">
-                  <p className="text-xs font-bold text-[#7fb3f5] uppercase mb-2">⚽ Batedores — {nomeMonitorado}</p>
+                  <p className="text-xs font-bold text-[#7fb3f5] uppercase mb-2">⚽ Batedores do {nomeMonitorado}</p>
                   <div className="space-y-1">
                     {batedores.map((pen,idx)=>(
                       <div key={pen.id} className="flex items-center gap-2 text-sm flex-wrap">
@@ -708,7 +709,7 @@ export default function App() {
               {/* Goleiro cobranças */}
               {goleiroList.length>0 && (
                 <div className="print-inner bg-[#0d1b2a] rounded-lg p-3 border border-[#1e3a5f]">
-                  <p className="text-xs font-bold text-[#a78bfa] uppercase mb-2">🧤 Cobranças no Goleiro — {nomeAdversario}</p>
+                  <p className="text-xs font-bold text-[#a78bfa] uppercase mb-2">🧤 Cobranças no Goleiro do {nomeMonitorado}</p>
                   <div className="space-y-1">
                     {goleiroList.map((pen,idx)=>(
                       <div key={pen.id} className="flex items-center gap-2 text-sm flex-wrap">

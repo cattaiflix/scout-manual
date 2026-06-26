@@ -243,7 +243,7 @@ export default function App() {
           .print-partial { background: #f9fafb !important; color: #111827 !important; }
           .print-card + .print-card { margin-top: 12pt !important; }
         }
-      \`}</style>
+      `}</style>
 
       {/* NAV */}
       <div className="no-print sticky top-0 z-50 bg-[#060e1a] border-b border-[#1e3a5f] px-4 py-3 flex items-center justify-between">

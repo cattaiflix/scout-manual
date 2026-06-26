@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 const ZONES = [
   { id: "tl", label: "↖ Esq\nSup" },
@@ -138,20 +138,51 @@ function resultLabel(pen) {
   return "❌ Fora";
 }
 
+const STORAGE_KEY = "scout-manual-v1";
+
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function App() {
+  const saved = loadSaved();
+
   const [step, setStep] = useState("form");
-  const [header, setHeader] = useState({
+  const [header, setHeader] = useState(saved?.header ?? {
     time1:"", time2:"", logo1:"", logo2:"",
     data: new Date().toISOString().split("T")[0],
     observador:"",
-    timeMonitorado: "time1", // "time1" = Casa, "time2" = Visitante
+    timeMonitorado: "time1",
   });
-  const [periods, setPeriods]   = useState([emptyPeriod(), emptyPeriod(), emptyPeriod()]);
-  const [penalties, setPenalties] = useState([]);
-  const [goalie, setGoalie]     = useState(emptyGoalie());
+  const [periods, setPeriods]   = useState(saved?.periods ?? [emptyPeriod(), emptyPeriod(), emptyPeriod()]);
+  const [penalties, setPenalties] = useState(saved?.penalties ?? []);
+  const [goalie, setGoalie]     = useState(saved?.goalie ?? emptyGoalie());
   const [newPen, setNewPen]     = useState(emptyPenalty());
   const [activeTab, setActiveTab] = useState(0);
+  const [saveMsg, setSaveMsg]   = useState("");
+
+  // Auto-save whenever data changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ header, periods, penalties, goalie }));
+    } catch {}
+  }, [header, periods, penalties, goalie]);
+
+  const clearData = () => {
+    if (!window.confirm("Limpar todos os dados e começar um novo jogo?")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    setHeader({ time1:"", time2:"", logo1:"", logo2:"", data: new Date().toISOString().split("T")[0], observador:"", timeMonitorado:"time1" });
+    setPeriods([emptyPeriod(), emptyPeriod(), emptyPeriod()]);
+    setPenalties([]);
+    setGoalie(emptyGoalie());
+    setActiveTab(0);
+    setStep("form");
+  };
 
   const updateHeader = (k,v) => setHeader(h=>({...h,[k]:v}));
   const updatePeriod = (i,upd) => setPeriods(ps=>ps.map((p,idx)=>idx===i?(typeof upd==="function"?upd(p):{...p,...upd}):p));
@@ -186,44 +217,43 @@ export default function App() {
 
   const batedores = penalties.filter(p=>p.tipo==="batedor");
   const goleiroList = penalties.filter(p=>p.tipo==="goleiro");
+
+  // Helpers — defined before use
   const zoneCount = (arr) => ZONES.reduce((acc,z)=>({...acc,[z.id]:arr.filter(p=>p.zona===z.id).length}),{});
-  const bateStats = zoneCount(batedores);
-  const golStats  = zoneCount(goleiroList);
 
-  // Result-based color per zone (for goleiro heatmap)
-  // Green if all defended, red if any gol, mixed = orange
-  const zoneResultColor = (arr) => ZONES.reduce((acc,z)=>{
+  const zoneNames = (arr) => ZONES.reduce((acc,z)=>({
+    ...acc,
+    [z.id]: arr.filter(p=>p.zona===z.id).map(p=>{
+      const parts = (p.jogador||"").trim().split(" ");
+      const short = parts.length>1 ? parts[0]+" "+parts[parts.length-1][0]+"." : parts[0];
+      return short.slice(0,11);
+    })
+  }),{});
+
+  // For erros: orange if defendido, red if fora
+  const bateErroZoneColor = (arr) => ZONES.reduce((acc,z)=>{
     const inZone = arr.filter(p=>p.zona===z.id);
     if(inZone.length===0) return {...acc,[z.id]:null};
-    const gols = inZone.filter(p=>p.resultado==="gol").length;
-    const def  = inZone.filter(p=>p.resultado==="defendido").length;
-    if(gols===0)  return {...acc,[z.id]:"green"};
-    if(def===0)   return {...acc,[z.id]:"red"};
-    return {...acc,[z.id]:"orange"};
-  },{});
-  const golZoneColor = zoneResultColor(goleiroList);
-
-  // Result-based color for batedores:
-  // green=gol, yellow=defendido, red=fora
-  const bateZoneColor = (arr) => ZONES.reduce((acc,z)=>{
-    const inZone = arr.filter(p=>p.zona===z.id);
-    if(inZone.length===0) return {...acc,[z.id]:null};
-    // Dominant result
-    const gols = inZone.filter(p=>p.resultado==="gol").length;
     const defs = inZone.filter(p=>p.resultado==="defendido").length;
     const fora = inZone.filter(p=>p.resultado==="fora").length;
-    const max = Math.max(gols, defs, fora);
-    if(max===gols && gols>0) return {...acc,[z.id]:"green"};
-    if(max===defs && defs>0) return {...acc,[z.id]:"orange"};
+    if(defs>=fora) return {...acc,[z.id]:"orange"};
     return {...acc,[z.id]:"red"};
   },{});
-  const bateZoneColors = bateZoneColor(batedores);
+
+  // For golDefesas: green if defended, orange if fora
+  const golDefZoneColor = (arr) => ZONES.reduce((acc,z)=>{
+    const inZone = arr.filter(p=>p.zona===z.id);
+    if(inZone.length===0) return {...acc,[z.id]:null};
+    const defs = inZone.filter(p=>p.resultado==="defendido").length;
+    if(defs>0) return {...acc,[z.id]:"green"};
+    return {...acc,[z.id]:"orange"};
+  },{});
 
   // Per-result filtered lists for split heatmaps
   const bateGols    = batedores.filter(p=>p.resultado==="gol");
-  const bateErros   = batedores.filter(p=>p.resultado!=="gol");  // defendido or fora
+  const bateErros   = batedores.filter(p=>p.resultado!=="gol");
   const golSofridos = goleiroList.filter(p=>p.resultado==="gol");
-  const golDefesas  = goleiroList.filter(p=>p.resultado!=="gol"); // defendido or fora
+  const golDefesas  = goleiroList.filter(p=>p.resultado!=="gol");
 
   const bateGolStats  = zoneCount(bateGols);
   const bateErroStats = zoneCount(bateErros);
@@ -235,39 +265,8 @@ export default function App() {
   const golSofNames   = zoneNames(golSofridos);
   const golDefNames   = zoneNames(golDefesas);
 
-  // For erros: zone color = orange if defendido, red if fora
-  const bateErroZoneColor = (arr) => ZONES.reduce((acc,z)=>{
-    const inZone = arr.filter(p=>p.zona===z.id);
-    if(inZone.length===0) return {...acc,[z.id]:null};
-    const defs = inZone.filter(p=>p.resultado==="defendido").length;
-    const fora = inZone.filter(p=>p.resultado==="fora").length;
-    if(defs>=fora) return {...acc,[z.id]:"orange"};
-    return {...acc,[z.id]:"red"};
-  },{});
   const bateErroColors = bateErroZoneColor(bateErros);
-
-  // For golDefesas: green if defended, orange if fora (missed by attacker)
-  const golDefZoneColor = (arr) => ZONES.reduce((acc,z)=>{
-    const inZone = arr.filter(p=>p.zona===z.id);
-    if(inZone.length===0) return {...acc,[z.id]:null};
-    const defs = inZone.filter(p=>p.resultado==="defendido").length;
-    if(defs>0) return {...acc,[z.id]:"green"};
-    return {...acc,[z.id]:"orange"};
-  },{});
-  const golDefColors = golDefZoneColor(golDefesas);
-
-  // Names per zone for heatmap labels
-  const zoneNames = (arr) => ZONES.reduce((acc,z)=>({
-    ...acc,
-    [z.id]: arr.filter(p=>p.zona===z.id).map(p=>{
-      const parts = (p.jogador||"").trim().split(" ");
-      // First name + initial of last name, max 10 chars
-      const short = parts.length>1 ? parts[0]+" "+parts[parts.length-1][0]+"." : parts[0];
-      return short.slice(0,11);
-    })
-  }),{});
-  const bateNames = zoneNames(batedores);
-  const golNames  = zoneNames(goleiroList);
+  const golDefColors   = golDefZoneColor(golDefesas);
 
   const ic = "w-full bg-[#0d1b2a] border border-[#1e3a5f] rounded-lg px-3 py-2 text-white placeholder-[#4a6fa5] focus:outline-none focus:border-[#3b82f6] text-sm";
   const lc = "block text-xs font-semibold text-[#7fb3f5] uppercase tracking-wider mb-1";
@@ -370,6 +369,7 @@ export default function App() {
           <button onClick={()=>setStep("form")} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${step==="form"?"bg-[#3b82f6] text-white":"text-[#4a6fa5] hover:text-white"}`}>Formulário</button>
           <button onClick={()=>setStep("report")} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${step==="report"?"bg-[#3b82f6] text-white":"text-[#4a6fa5] hover:text-white"}`}>Relatório</button>
           {step==="report" && <button onClick={()=>window.print()} className="px-3 py-1.5 bg-green-600 hover:bg-green-500 rounded-lg text-sm font-medium text-white transition-colors">🖨 PDF</button>}
+          <button onClick={clearData} title="Novo jogo" className="px-3 py-1.5 rounded-lg text-sm font-medium text-[#4a6fa5] hover:text-red-400 transition-colors">🗑 Novo</button>
         </div>
       </div>
 
@@ -377,8 +377,9 @@ export default function App() {
       {step==="form" && (
         <div className="max-w-3xl mx-auto p-4 space-y-4 no-print">
 
-          <div className="flex items-center gap-2 bg-[#0d1b2a] border border-[#1e3a5f] rounded-lg px-3 py-2 text-xs text-[#7fb3f5]">
-            <span>🎙</span><span>Toque no microfone em qualquer campo para ditar.</span>
+          <div className="flex items-center justify-between bg-[#0d1b2a] border border-[#1e3a5f] rounded-lg px-3 py-2 text-xs text-[#7fb3f5]">
+            <span className="flex items-center gap-2"><span>🎙</span><span>Toque no microfone em qualquer campo para ditar.</span></span>
+            <span className="flex items-center gap-1 text-green-400"><span>💾</span><span>Salvo automaticamente</span></span>
           </div>
 
           {/* CABEÇALHO */}

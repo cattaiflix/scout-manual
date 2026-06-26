@@ -306,13 +306,13 @@ export default function App() {
             background: #ffffff !important;
             color: #111827 !important;
           }
-          body * {
+          body *:not(.hm-text) {
             color: #111827 !important;
             box-shadow: none !important;
             border-color: #d1d5db !important;
           }
           /* Fundo branco só para elementos que NÃO são heatmap */
-          body *:not(.heat-0):not(.heat-lo):not(.heat-md):not(.heat-hi):not(.heat-bar) {
+          body *:not(.heat-0):not(.heat-lo):not(.heat-md):not(.heat-hi):not(.heat-bar):not(.hm-text):not(.hm-text-muted) {
             background-color: #ffffff !important;
           }
 
@@ -329,7 +329,7 @@ export default function App() {
             break-inside: avoid !important;
           }
           .print-inner:not(.heat-bar),
-          .print-inner *:not(.heat-0):not(.heat-lo):not(.heat-md):not(.heat-hi):not(.heat-bar) {
+          .print-inner *:not(.heat-0):not(.heat-lo):not(.heat-md):not(.heat-hi):not(.heat-bar):not(.hm-text):not(.hm-text-muted) {
             background-color: #f3f4f6 !important;
           }
 
@@ -345,16 +345,20 @@ export default function App() {
           .res-yellow { color: #92400e !important; }
 
           /* ── HEATMAP — cores fortes mantidas (alta especificidade) ── */
-          .print-card .heat-lo,
-          .print-card .heat-lo span { background-color: #16a34a !important; color: #ffffff !important; }
-          .print-card .heat-md,
-          .print-card .heat-md span { background-color: #d97706 !important; color: #ffffff !important; }
-          .print-card .heat-hi,
-          .print-card .heat-hi span { background-color: #dc2626 !important; color: #ffffff !important; }
-          .print-card .heat-0,
-          .print-card .heat-0 span { background-color: #e5e7eb !important; color: #6b7280 !important; }
-          .print-card .heat-bar,
-          .print-card .heat-bar span { background-color: #f3f4f6 !important; color: #374151 !important; }
+          .print-card .heat-lo { background-color: #16a34a !important; }
+          .print-card .heat-md { background-color: #d97706 !important; }
+          .print-card .heat-hi { background-color: #dc2626 !important; }
+          .print-card .heat-0  { background-color: #e5e7eb !important; }
+          .print-card .heat-bar { background-color: #f3f4f6 !important; }
+
+          /* Texto das células — branco visível sobre as cores (vence body *) */
+          .print-card .heat-lo .hm-text,
+          .print-card .heat-md .hm-text,
+          .print-card .heat-hi .hm-text,
+          .print-card .hm-text,
+          .hm-text { color: #ffffff !important; background-color: transparent !important; }
+          .print-card .hm-text-muted,
+          .hm-text-muted { color: #6b7280 !important; background-color: transparent !important; }
         }
       `}</style>
 
@@ -790,11 +794,12 @@ export default function App() {
                         const rc=colorFn?colorFn[z.id]:null;
                         bg=rc==="green"?"heat-lo bg-[#22c55e]":rc==="orange"?"heat-md bg-[#f59e0b]":"heat-hi bg-[#ef4444]";
                       }
+                      const textCls = count===0 ? "hm-text-muted" : "hm-text";
                       return (
                         <div key={z.id} className={`${bg} border border-[#1e3a5f] min-h-14 flex flex-col items-center justify-center gap-0.5 px-1 py-1.5`}>
-                          {count>0 && <span className="text-xs font-black text-white leading-none">{count}</span>}
+                          {count>0 && <span className={`${textCls} text-xs font-black text-white leading-none`}>{count}</span>}
                           {nms.map((nm,ni)=>(
-                            <span key={ni} className="text-white font-medium leading-none text-center"
+                            <span key={ni} className={`${textCls} text-white font-medium leading-none text-center`}
                               style={{fontSize:"9px",lineHeight:"1.1",maxWidth:"100%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                               {nm}
                             </span>

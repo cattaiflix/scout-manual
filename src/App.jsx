@@ -295,38 +295,19 @@ export default function App() {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
 
-          /* Ocultar elementos de tela */
-          .no-print, .no-print * { display: none !important; }
+          /* Ocultar nav, botões e elementos de tela */
+          .no-print { display: none !important; }
 
-          /* Navbar sticky não repete no rodapé */
-          nav, header, .sticky { position: static !important; }
+          /* Fundo branco, texto preto em tudo */
+          body, html { background: #ffffff !important; color: #111827 !important; }
+          body * { background-color: #ffffff !important; color: #111827 !important; box-shadow: none !important; border-color: #d1d5db !important; }
 
-          /* Fundo branco geral */
-          *, *::before, *::after { box-shadow: none !important; }
-          body, html, #root, #root > div { background: #ffffff !important; color: #111827 !important; }
-
-          /* Fundo transparente para elementos genéricos */
-          * { background-color: transparent !important; color: #111827 !important; border-color: #d1d5db !important; }
-
-          /* ── Heatmap — cores vibrantes idênticas à tela ── */
-          .heat-0  { background-color: #1e293b !important; }
-          .heat-lo { background-color: #22c55e !important; }
-          .heat-md { background-color: #f59e0b !important; }
-          .heat-hi { background-color: #ef4444 !important; }
-          .heat-bar { background-color: #1e3a5f !important; }
-          .heat-0 *  { color: #94a3b8 !important; }
-          .heat-lo * { color: #ffffff !important; }
-          .heat-md * { color: #ffffff !important; }
-          .heat-hi * { color: #ffffff !important; }
-          .heat-bar * { color: #94a3b8 !important; }
-
-          /* Cards */
+          /* Cards — borda visível e sem quebra de página no meio */
           .print-card {
-            background-color: #ffffff !important;
             border: 1.5px solid #9ca3af !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            margin-bottom: 10pt !important;
+            margin-bottom: 8pt !important;
           }
           .print-inner {
             background-color: #f3f4f6 !important;
@@ -334,14 +315,31 @@ export default function App() {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
+          .print-inner * { background-color: #f3f4f6 !important; }
 
-          /* Cores funcionais */
+          /* Parciais */
+          .print-partial { background-color: #f3f4f6 !important; }
+          .print-partial * { background-color: #f3f4f6 !important; }
+
+          /* Cores de texto funcionais */
           .print-score         { color: #1d4ed8 !important; }
           .print-badge-monitor { background-color: #1d4ed8 !important; color: #ffffff !important; }
-          .res-green           { color: #15803d !important; }
-          .res-red             { color: #b91c1c !important; }
-          .res-yellow          { color: #92400e !important; }
-          .print-partial       { background-color: #f3f4f6 !important; }
+          .print-badge-monitor * { background-color: #1d4ed8 !important; color: #ffffff !important; }
+          .res-green  { color: #15803d !important; }
+          .res-red    { color: #b91c1c !important; }
+          .res-yellow { color: #92400e !important; }
+
+          /* ── Heatmap com cores vibrantes (por último para sobrescrever o branco geral) ── */
+          .heat-0  { background-color: #e5e7eb !important; }
+          .heat-lo { background-color: #22c55e !important; }
+          .heat-md { background-color: #f59e0b !important; }
+          .heat-hi { background-color: #ef4444 !important; }
+          .heat-bar { background-color: #334155 !important; }
+          .heat-0 * { background-color: #e5e7eb !important; color: #6b7280 !important; }
+          .heat-lo * { background-color: #22c55e !important; color: #ffffff !important; }
+          .heat-md * { background-color: #f59e0b !important; color: #ffffff !important; }
+          .heat-hi * { background-color: #ef4444 !important; color: #ffffff !important; }
+          .heat-bar * { background-color: #334155 !important; color: #94a3b8 !important; }
         }
       `}</style>
 
